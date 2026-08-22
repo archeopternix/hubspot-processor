@@ -17,9 +17,34 @@ type researchResult struct {
 }
 
 type researchAttribute struct {
-	Name     string  `json:"name"`
-	Proposal string  `json:"proposal"`
-	Score    float64 `json:"score"`
+	Name     string        `json:"name"`
+	Proposal proposalValue `json:"proposal"`
+	Score    float64       `json:"score"`
+}
+
+type proposalValue string
+
+func (p *proposalValue) UnmarshalJSON(data []byte) error {
+	data = bytes.TrimSpace(data)
+	if len(data) == 0 {
+		return fmt.Errorf("proposal is empty JSON")
+	}
+	if data[0] == '"' {
+		var value string
+		if err := json.Unmarshal(data, &value); err != nil {
+			return err
+		}
+		*p = proposalValue(value)
+		return nil
+	}
+
+	for _, character := range data {
+		if character < '0' || character > '9' {
+			return fmt.Errorf("numeric proposal %q is not a non-negative integer", string(data))
+		}
+	}
+	*p = proposalValue(string(data))
+	return nil
 }
 
 type responsesRequest struct {
@@ -73,7 +98,7 @@ func (c *Client) EnrichObject(
 
 	// Apply only after the complete result passed validation.
 	for _, researched := range result.Attributes {
-		proposal := strings.TrimSpace(researched.Proposal)
+		proposal := strings.TrimSpace(string(researched.Proposal))
 		if researched.Name == "hs_quick_context" {
 			proposal = formatQuickContextLineEndings(proposal)
 		}
@@ -205,13 +230,13 @@ func validateResearchResult(result researchResult, definition domain.ObjectDefin
 			return fmt.Errorf("ai: score for %q must be between 0 and 1", attribute.Name)
 		}
 
-		proposal := strings.TrimSpace(attribute.Proposal)
+		proposal := strings.TrimSpace(string(attribute.Proposal))
 		if proposal == "" && attribute.Score != 0 {
 			return fmt.Errorf("ai: empty proposal for %q must have score 0", attribute.Name)
 		}
 		if proposal != "" && !attributeDefinition.AcceptsValue(proposal) {
 			return fmt.Errorf(
-				"ai: proposal %q is not an allowed value for %q",
+				"ai: proposal %q is not valid for %q",
 				proposal,
 				attribute.Name,
 			)

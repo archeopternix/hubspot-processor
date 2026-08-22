@@ -32,6 +32,9 @@ func buildPrompt(basePrompt string, object domain.Object, definition domain.Obje
 			fmt.Fprintf(&b, "Description: %s\n", description)
 		}
 		fmt.Fprintf(&b, "Required: %t\n", attribute.Required)
+		if attribute.ValueType == domain.AttributeValueInteger {
+			b.WriteString("Value format: return a non-negative integer without a plus sign, separators, units, text, or approximation markers; otherwise return an empty proposal.\n")
+		}
 		if len(attribute.AllowedValues) > 0 {
 			b.WriteString("Allowed values (return one exact value or an empty proposal):\n")
 			for _, value := range attribute.AllowedValues {

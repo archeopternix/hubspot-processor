@@ -1,5 +1,7 @@
 package domain
 
+import "strings"
+
 // Object is the generic domain representation of a HubSpot CRM object.
 // Attribute keys are the configured property names.
 type Object struct {
@@ -22,6 +24,24 @@ func NewObject(id string, definitions []AttributeDefinition) Object {
 	}
 
 	return object
+}
+
+// ImportedValue returns one imported attribute value with surrounding
+// whitespace removed. Nil objects and missing attributes return an empty value.
+func (o *Object) ImportedValue(name string) string {
+	if o == nil {
+		return ""
+	}
+	attribute, ok := o.Attributes[name]
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(attribute.Import)
+}
+
+// Name returns the conventional imported name attribute.
+func (o *Object) Name() string {
+	return o.ImportedValue("name")
 }
 
 // SetImport stores the value read from the source system.

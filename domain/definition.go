@@ -2,32 +2,57 @@ package domain
 
 import "strings"
 
+// AttributeValueType describes additional value constraints that apply to an
+// attribute proposal and export value.
+type AttributeValueType string
+
+const (
+	AttributeValueText    AttributeValueType = ""
+	AttributeValueInteger AttributeValueType = "integer"
+)
+
 // AttributeDefinition configures how an attribute participates in the
 // data-quality workflow. Name is also used as the HubSpot property name by
 // the HubSpot adapter.
 type AttributeDefinition struct {
-	Name          string   `json:"name"`
-	Description   string   `json:"description,omitempty"`
-	AllowedValues []string `json:"allowed_values,omitempty"`
-	Required      bool     `json:"required"`
-	Research      bool     `json:"research"`
-	Export        bool     `json:"export"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description,omitempty"`
+	AllowedValues []string           `json:"allowed_values,omitempty"`
+	ValueType     AttributeValueType `json:"value_type,omitempty"`
+	Required      bool               `json:"required"`
+	Research      bool               `json:"research"`
+	Export        bool               `json:"export"`
 }
 
-// AcceptsValue reports whether value is permitted by the attribute's optional
-// allowed-values constraint.
+// AcceptsValue reports whether value satisfies the attribute's type and
+// optional allowed-values constraints.
 func (d AttributeDefinition) AcceptsValue(value string) bool {
+	value = strings.TrimSpace(value)
+	if d.ValueType == AttributeValueInteger && !isNonNegativeInteger(value) {
+		return false
+	}
+
 	if len(d.AllowedValues) == 0 {
 		return true
 	}
-
-	value = strings.TrimSpace(value)
 	for _, allowed := range d.AllowedValues {
 		if value == strings.TrimSpace(allowed) {
 			return true
 		}
 	}
 	return false
+}
+
+func isNonNegativeInteger(value string) bool {
+	if value == "" {
+		return false
+	}
+	for _, character := range value {
+		if character < '0' || character > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // ObjectDefinition describes one CRM object type and the attributes to read.
