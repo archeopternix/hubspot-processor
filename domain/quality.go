@@ -2,8 +2,8 @@ package domain
 
 import "strings"
 
-// Quality contains the lifecycle of a single attribute during data-quality processing.
-type Quality struct {
+// AttributeState contains the lifecycle of a single object attribute.
+type AttributeState struct {
 	Import   string  `json:"import,omitempty"`
 	Proposal string  `json:"proposal,omitempty"`
 	Export   string  `json:"export,omitempty"`
@@ -13,7 +13,7 @@ type Quality struct {
 
 // Evaluate decides whether a proposal is eligible for export.
 // Existing imported values are never overwritten.
-func (q Quality) Evaluate(definition AttributeDefinition, minScore float64) Quality {
+func (q AttributeState) Evaluate(definition AttributeDefinition, minScore float64) AttributeState {
 	q.Export = ""
 	q.IsExport = false
 

@@ -6,10 +6,11 @@ import "strings"
 // data-quality workflow. Name is also used as the HubSpot property name by
 // the HubSpot adapter.
 type AttributeDefinition struct {
-	Name     string `json:"name"`
-	Required bool   `json:"required"`
-	Research bool   `json:"research"`
-	Export   bool   `json:"export"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Required    bool   `json:"required"`
+	Research    bool   `json:"research"`
+	Export      bool   `json:"export"`
 }
 
 // ObjectDefinition describes one CRM object type and the attributes to read.
@@ -47,4 +48,15 @@ func (d ObjectDefinition) Attribute(name string) (AttributeDefinition, bool) {
 		}
 	}
 	return AttributeDefinition{}, false
+}
+
+// ResearchAttributes returns all attributes that should be researched.
+func (d ObjectDefinition) ResearchAttributes() []AttributeDefinition {
+	result := make([]AttributeDefinition, 0, len(d.Attributes))
+	for _, attribute := range d.Attributes {
+		if attribute.Research && strings.TrimSpace(attribute.Name) != "" {
+			result = append(result, attribute)
+		}
+	}
+	return result
 }

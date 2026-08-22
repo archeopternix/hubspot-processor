@@ -25,7 +25,7 @@ All CRM data is represented as:
 ```go
 type Object struct {
     ID         string
-    Attributes map[string]Quality
+    Attributes map[string]AttributeState
 }
 ```
 
