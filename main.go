@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"hubspot-object-reader/domain"
-	"hubspot-object-reader/hubspot"
+	"github.com/archeopternix/hubspot-processor/domain"
+	"github.com/archeopternix/hubspot-processor/hubspot"
 )
 
 func main() {

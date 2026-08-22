@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	"hubspot-object-reader/domain"
+	"github.com/archeopternix/hubspot-processor/domain"
 )
 
 type crmObject struct {
