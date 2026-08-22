@@ -11,26 +11,29 @@ type AttributeState struct {
 	IsExport bool    `json:"is_export"`
 }
 
-// Evaluate decides whether a proposal is eligible for export.
-// Existing imported values are never overwritten.
-func (q AttributeState) Evaluate(definition AttributeDefinition, minScore float64) AttributeState {
+// Evaluate decides whether a proposed value meets the confidence threshold for
+// export. Attribute-specific export policy is applied by the object evaluator.
+func (q AttributeState) Evaluate(
+	minimalConfidence float64,
+	highConfidence float64,
+) AttributeState {
 	q.Export = ""
 	q.IsExport = false
 
-	if strings.TrimSpace(q.Import) != "" {
-		return q
-	}
-	if !definition.Export {
-		return q
-	}
-	if strings.TrimSpace(q.Proposal) == "" {
-		return q
-	}
-	if q.Score < minScore {
+	proposal := strings.TrimSpace(q.Proposal)
+	if proposal == "" {
 		return q
 	}
 
-	q.Export = strings.TrimSpace(q.Proposal)
+	requiredConfidence := highConfidence
+	if strings.TrimSpace(q.Import) == "" {
+		requiredConfidence = minimalConfidence
+	}
+	if q.Score < requiredConfidence {
+		return q
+	}
+
+	q.Export = proposal
 	q.IsExport = true
 	return q
 }

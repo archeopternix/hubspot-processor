@@ -73,14 +73,28 @@ func (c *Client) EnrichObject(
 
 	// Apply only after the complete result passed validation.
 	for _, researched := range result.Attributes {
+		proposal := strings.TrimSpace(researched.Proposal)
+		if researched.Name == "hs_quick_context" {
+			proposal = formatQuickContextLineEndings(proposal)
+		}
 		object.SetProposal(
 			researched.Name,
-			strings.TrimSpace(researched.Proposal),
+			proposal,
 			researched.Score,
 		)
 	}
 
 	return nil
+}
+
+func formatQuickContextLineEndings(value string) string {
+	value = strings.ReplaceAll(value, "\r\n", "\n")
+	value = strings.ReplaceAll(value, "\r", "\n")
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	return strings.ReplaceAll(value, "\n", "\r\n") + "\r\n"
 }
 
 func (c *Client) research(
@@ -173,14 +187,15 @@ func responseOutputText(response responsesResponse) string {
 }
 
 func validateResearchResult(result researchResult, definition domain.ObjectDefinition) error {
-	required := make(map[string]struct{})
+	required := make(map[string]domain.AttributeDefinition)
 	for _, attribute := range definition.ResearchAttributes() {
-		required[attribute.Name] = struct{}{}
+		required[attribute.Name] = attribute
 	}
 
 	seen := make(map[string]struct{}, len(result.Attributes))
 	for _, attribute := range result.Attributes {
-		if _, ok := required[attribute.Name]; !ok {
+		attributeDefinition, ok := required[attribute.Name]
+		if !ok {
 			return fmt.Errorf("ai: unexpected research attribute %q", attribute.Name)
 		}
 		if _, duplicate := seen[attribute.Name]; duplicate {
@@ -188,6 +203,18 @@ func validateResearchResult(result researchResult, definition domain.ObjectDefin
 		}
 		if attribute.Score < 0 || attribute.Score > 1 {
 			return fmt.Errorf("ai: score for %q must be between 0 and 1", attribute.Name)
+		}
+
+		proposal := strings.TrimSpace(attribute.Proposal)
+		if proposal == "" && attribute.Score != 0 {
+			return fmt.Errorf("ai: empty proposal for %q must have score 0", attribute.Name)
+		}
+		if proposal != "" && !attributeDefinition.AcceptsValue(proposal) {
+			return fmt.Errorf(
+				"ai: proposal %q is not an allowed value for %q",
+				proposal,
+				attribute.Name,
+			)
 		}
 		seen[attribute.Name] = struct{}{}
 	}

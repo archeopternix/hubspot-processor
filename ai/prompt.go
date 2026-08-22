@@ -2,7 +2,6 @@ package ai
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/archeopternix/hubspot-processor/domain"
@@ -33,6 +32,12 @@ func buildPrompt(basePrompt string, object domain.Object, definition domain.Obje
 			fmt.Fprintf(&b, "Description: %s\n", description)
 		}
 		fmt.Fprintf(&b, "Required: %t\n", attribute.Required)
+		if len(attribute.AllowedValues) > 0 {
+			b.WriteString("Allowed values (return one exact value or an empty proposal):\n")
+			for _, value := range attribute.AllowedValues {
+				fmt.Fprintf(&b, "- %s\n", value)
+			}
+		}
 	}
 
 	b.WriteString(`
@@ -45,18 +50,10 @@ RULES
 - Never change imported data directly.
 - proposal contains the researched value only.
 - score is a confidence value between 0.0 and 1.0.
+- If an attribute lists allowed values, proposal must exactly match one of them.
 - If a value cannot be established reliably, return proposal="" and score=0.
 - Do not invent facts.
 `)
 
 	return b.String()
-}
-
-func researchAttributeNames(definition domain.ObjectDefinition) []string {
-	names := make([]string, 0, len(definition.Attributes))
-	for _, attribute := range definition.ResearchAttributes() {
-		names = append(names, attribute.Name)
-	}
-	sort.Strings(names)
-	return names
 }

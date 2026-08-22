@@ -6,11 +6,28 @@ import "strings"
 // data-quality workflow. Name is also used as the HubSpot property name by
 // the HubSpot adapter.
 type AttributeDefinition struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Required    bool   `json:"required"`
-	Research    bool   `json:"research"`
-	Export      bool   `json:"export"`
+	Name          string   `json:"name"`
+	Description   string   `json:"description,omitempty"`
+	AllowedValues []string `json:"allowed_values,omitempty"`
+	Required      bool     `json:"required"`
+	Research      bool     `json:"research"`
+	Export        bool     `json:"export"`
+}
+
+// AcceptsValue reports whether value is permitted by the attribute's optional
+// allowed-values constraint.
+func (d AttributeDefinition) AcceptsValue(value string) bool {
+	if len(d.AllowedValues) == 0 {
+		return true
+	}
+
+	value = strings.TrimSpace(value)
+	for _, allowed := range d.AllowedValues {
+		if value == strings.TrimSpace(allowed) {
+			return true
+		}
+	}
+	return false
 }
 
 // ObjectDefinition describes one CRM object type and the attributes to read.
@@ -48,6 +65,24 @@ func (d ObjectDefinition) Attribute(name string) (AttributeDefinition, bool) {
 		}
 	}
 	return AttributeDefinition{}, false
+}
+
+// WithAllowedValues returns a copy of the definition with an allowed-values
+// constraint applied to one attribute. The original definition is unchanged.
+func (d ObjectDefinition) WithAllowedValues(name string, values []string) ObjectDefinition {
+	result := d
+	result.Attributes = append([]AttributeDefinition(nil), d.Attributes...)
+
+	name = strings.TrimSpace(name)
+	for i := range result.Attributes {
+		if result.Attributes[i].Name != name {
+			continue
+		}
+		result.Attributes[i].AllowedValues = append([]string(nil), values...)
+		break
+	}
+
+	return result
 }
 
 // ResearchAttributes returns all attributes that should be researched.

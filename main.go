@@ -15,7 +15,10 @@ import (
 )
 
 const (
-	resultFile            = "result.md"
+	resultFile        = "result.md"
+	minimalConfidence = 0.75
+	highConfidence    = 0.90
+
 	companyResearchPrompt = `Research the company represented by the supplied HubSpot CRM data.
 
 Identify the exact legal/business entity before extracting facts.
@@ -58,7 +61,19 @@ func main() {
 	}
 
 	// business logic
-	objects, err := hubSpotClient.ReadAll(ctx, domain.CompanyDefinition)
+	definition := domain.CompanyDefinition
+	industryOptions, err := hubSpotClient.ReadPropertyOptions(
+		ctx,
+		definition.Type,
+		"industry",
+	)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	definition = definition.WithAllowedValues("industry", industryOptions)
+
+	objects, err := hubSpotClient.ReadAll(ctx, definition)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -67,6 +82,7 @@ func main() {
 	batchStarted := time.Now()
 	enriched := 0
 	failed := 0
+	processed := make([]int, 0, 1)
 
 	for i := range objects {
 		object := &objects[i]
@@ -81,7 +97,7 @@ func main() {
 		err := aiClient.EnrichObject(
 			ctx,
 			object,
-			domain.CompanyDefinition,
+			definition,
 			companyResearchPrompt,
 		)
 		elapsed := time.Since(started)
@@ -99,6 +115,7 @@ func main() {
 		}
 
 		enriched++
+		processed = append(processed, i)
 		log.Printf(
 			"AI enrichment completed id=%s name=%q duration=%s",
 			object.ID,
@@ -117,13 +134,141 @@ func main() {
 		time.Since(batchStarted),
 	)
 
-	markdown := renderMarkdown(objects, domain.CompanyDefinition)
+	updated := 0
+	updatedIndexes := make([]int, 0, len(processed))
+	for _, index := range processed {
+		if evaluateObject(
+			&objects[index],
+			definition,
+			minimalConfidence,
+			highConfidence,
+		) {
+			updated++
+			updatedIndexes = append(updatedIndexes, index)
+		}
+	}
+	log.Printf(
+		"evaluation finished processed=%d updated=%d",
+		len(processed),
+		updated,
+	)
+
+	written := 0
+	writeFailed := 0
+	for _, index := range updatedIndexes {
+		object := &objects[index]
+		log.Printf(
+			"HubSpot write started id=%s name=%q",
+			object.ID,
+			objectName(object),
+		)
+
+		if err := hubSpotClient.Write(ctx, object, definition); err != nil {
+			writeFailed++
+			log.Printf(
+				"HubSpot write failed id=%s name=%q error=%v",
+				object.ID,
+				objectName(object),
+				err,
+			)
+			continue
+		}
+
+		written++
+		log.Printf(
+			"HubSpot write completed id=%s name=%q",
+			object.ID,
+			objectName(object),
+		)
+	}
+	log.Printf(
+		"HubSpot writes finished eligible=%d written=%d failed=%d",
+		len(updatedIndexes),
+		written,
+		writeFailed,
+	)
+
+	processedObjects := make([]domain.Object, 0, len(processed))
+	for _, index := range processed {
+		processedObjects = append(processedObjects, objects[index])
+	}
+
+	markdown := renderMarkdown(processedObjects, definition)
 	if err := os.WriteFile(resultFile, []byte(markdown), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "write %s: %v\n", resultFile, err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("written %d objects to %s\n", len(objects), resultFile)
+	fmt.Printf("written %d objects to %s\n", len(processedObjects), resultFile)
+	if writeFailed > 0 {
+		fmt.Fprintf(os.Stderr, "%d HubSpot write(s) failed\n", writeFailed)
+		os.Exit(1)
+	}
+}
+
+func evaluateObject(
+	object *domain.Object,
+	definition domain.ObjectDefinition,
+	minimalConfidence float64,
+	highConfidence float64,
+) bool {
+	if object == nil {
+		return false
+	}
+
+	candidates := make(map[string]domain.AttributeState, len(definition.Attributes))
+	changed := false
+
+	for _, attribute := range definition.Attributes {
+		name := strings.TrimSpace(attribute.Name)
+		if name == "" {
+			continue
+		}
+
+		state, exists := object.Attributes[name]
+		if !exists {
+			continue
+		}
+
+		state.Export = ""
+		state.IsExport = false
+		candidates[name] = state
+
+		if name == "id" || name == "name" || name == "ai_enriched_date" {
+			continue
+		}
+		if !attribute.Export {
+			continue
+		}
+
+		evaluated := state.Evaluate(minimalConfidence, highConfidence)
+		if evaluated.IsExport &&
+			strings.TrimSpace(evaluated.Export) == strings.TrimSpace(state.Import) {
+			evaluated.Export = ""
+			evaluated.IsExport = false
+		}
+		if evaluated.IsExport {
+			changed = true
+		}
+		candidates[name] = evaluated
+	}
+
+	if changed {
+		if enrichedDate, exists := candidates["ai_enriched_date"]; exists {
+			enrichedDate.Export = time.Now().UTC().Format(time.DateOnly)
+			enrichedDate.IsExport = true
+			candidates["ai_enriched_date"] = enrichedDate
+		}
+	}
+
+	for _, attribute := range definition.Attributes {
+		name := strings.TrimSpace(attribute.Name)
+		if candidate, exists := candidates[name]; exists {
+			object.Attributes[name] = candidate
+		}
+	}
+
+	return changed
 }
 
 func objectName(object *domain.Object) string {
@@ -142,10 +287,6 @@ func renderMarkdown(objects []domain.Object, definition domain.ObjectDefinition)
 	b.WriteString("# HubSpot Company Result\n\n")
 
 	for i, object := range objects {
-		// TODO: Remove this limit when the AI enrichment is working reliably.
-		if i > 5 {
-			break
-		}
 		if i > 0 {
 			b.WriteString("\n---\n\n")
 		}
