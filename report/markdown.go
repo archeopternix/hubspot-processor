@@ -31,7 +31,7 @@ func (p *MarkdownPrinter) PrintAll(writer io.Writer, objects []domain.Object) er
 	}
 
 	var b strings.Builder
-	b.WriteString("# HubSpot Company Result\n\n")
+	fmt.Fprintf(&b, "# HubSpot %s Result\n\n", objectTypeLabel(p.definition.Type))
 
 	for i := range objects {
 		if i > 0 {
@@ -49,7 +49,7 @@ func (p *MarkdownPrinter) PrintAll(writer io.Writer, objects []domain.Object) er
 func (p *MarkdownPrinter) writeObject(b *strings.Builder, object *domain.Object) {
 	name := object.Name()
 	if name == "" {
-		name = "Unnamed Company"
+		name = "Unnamed " + objectTypeLabel(p.definition.Type)
 	}
 	fmt.Fprintf(b, "## %s\n\n", escapeMarkdownText(name))
 	fmt.Fprintf(b, "**ID:** %s\n\n", escapeMarkdownText(object.ID))
@@ -84,10 +84,23 @@ func (p *MarkdownPrinter) writeObject(b *strings.Builder, object *domain.Object)
 		)
 	}
 
-	b.WriteString("\n**HubSpot Context:**\n\n")
-	context := normalizeLineEndings(object.Attributes["hs_quick_context"].Proposal)
-	b.WriteString(strings.TrimSpace(context))
-	b.WriteString("\n")
+	if _, configured := p.definition.Attribute("hs_quick_context"); configured {
+		b.WriteString("\n**HubSpot Context:**\n\n")
+		context := normalizeLineEndings(object.Attributes["hs_quick_context"].Proposal)
+		b.WriteString(strings.TrimSpace(context))
+		b.WriteString("\n")
+	}
+}
+
+func objectTypeLabel(objectType string) string {
+	switch strings.ToLower(strings.TrimSpace(objectType)) {
+	case "companies":
+		return "Company"
+	case "contacts":
+		return "Contact"
+	default:
+		return "Object"
+	}
 }
 
 func renderScore(score float64, researched bool) string {

@@ -39,9 +39,20 @@ func (o *Object) ImportedValue(name string) string {
 	return strings.TrimSpace(attribute.Import)
 }
 
-// Name returns the conventional imported name attribute.
+// Name returns a display name for company and contact objects.
 func (o *Object) Name() string {
-	return o.ImportedValue("name")
+	if name := o.ImportedValue("name"); name != "" {
+		return name
+	}
+
+	name := strings.TrimSpace(
+		o.ImportedValue("firstname") + " " + o.ImportedValue("lastname"),
+	)
+	if name != "" {
+		return name
+	}
+
+	return o.ImportedValue("email")
 }
 
 // SetImport stores the value read from the source system.

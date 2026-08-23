@@ -2,9 +2,7 @@ package hubspot
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -34,46 +32,20 @@ func (c *Client) ReadPropertyOptions(
 	if propertyName == "" {
 		return nil, fmt.Errorf("HubSpot property read: property name is empty")
 	}
-	if c.accessToken == "" {
-		return nil, fmt.Errorf("HubSpot property read: access token is empty")
-	}
 
-	endpoint, err := url.Parse(
-		strings.TrimRight(c.baseURL, "/") +
-			"/crm/properties/2026-03/" + url.PathEscape(objectType) +
-			"/" + url.PathEscape(propertyName),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("HubSpot property read: parse URL: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("HubSpot property read: create request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+c.accessToken)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("HubSpot property read: request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
-		return nil, fmt.Errorf(
-			"HubSpot property read: returned %s for %s.%s: %s",
-			resp.Status,
-			objectType,
-			propertyName,
-			strings.TrimSpace(string(body)),
-		)
-	}
-
+	path := "/crm/properties/2026-03/" + url.PathEscape(objectType) +
+		"/" + url.PathEscape(propertyName)
 	var property propertyDefinition
-	if err := json.NewDecoder(resp.Body).Decode(&property); err != nil {
-		return nil, fmt.Errorf("HubSpot property read: decode response: %w", err)
+	if err := c.do(
+		ctx,
+		"property read "+objectType+"."+propertyName,
+		http.MethodGet,
+		path,
+		nil,
+		nil,
+		&property,
+	); err != nil {
+		return nil, err
 	}
 	if property.Type != "enumeration" {
 		return nil, fmt.Errorf(

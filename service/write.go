@@ -21,7 +21,9 @@ func (s *Service) WriteOne(ctx context.Context, object *domain.Object) (Status, 
 	if !s.evaluateObject(object) {
 		return StatusSkipped, nil
 	}
-	if err := s.hubSpot.Write(ctx, object, s.definition); err != nil {
+	operationCtx, cancel := withOperationTimeout(ctx, s.operationTimeout)
+	defer cancel()
+	if err := s.hubSpot.Write(operationCtx, object, s.definition); err != nil {
 		return StatusFailed, err
 	}
 	return StatusWritten, nil

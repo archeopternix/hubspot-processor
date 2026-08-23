@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/archeopternix/hubspot-processor/ai"
 	"github.com/archeopternix/hubspot-processor/domain"
@@ -18,16 +20,53 @@ const (
 	resultFile        = "result.md"
 	minimalConfidence = 0.75
 	highConfidence    = 0.90
+	operationTimeout  = 2 * time.Minute
 )
 
 func main() {
-	if err := run(context.Background()); err != nil {
+	ctx := context.Background()
+
+	var err error
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("HUBSPOT_OBJECT_TYPE"))) {
+	case "", "companies":
+		err = runCompanies(ctx)
+	case "contacts":
+		err = runContacts(ctx)
+	default:
+		err = fmt.Errorf(
+			"unsupported HUBSPOT_OBJECT_TYPE %q: expected companies or contacts",
+			os.Getenv("HUBSPOT_OBJECT_TYPE"),
+		)
+	}
+
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context) error {
+type objectRunConfig struct {
+	Definition            domain.ObjectDefinition
+	Prompt                string
+	EnumerationProperties []string
+}
+
+func runCompanies(ctx context.Context) error {
+	return runObject(ctx, objectRunConfig{
+		Definition:            domain.CompanyDefinition,
+		Prompt:                domain.CompanyResearchPrompt,
+		EnumerationProperties: []string{"industry"},
+	})
+}
+
+func runContacts(ctx context.Context) error {
+	return runObject(ctx, objectRunConfig{
+		Definition: domain.ContactDefinition,
+		Prompt:     domain.ContactResearchPrompt,
+	})
+}
+
+func runObject(ctx context.Context, config objectRunConfig) error {
 	hubSpotClient, err := newHubSpotClient()
 	if err != nil {
 		return err
@@ -37,18 +76,18 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	definition := domain.CompanyDefinition
 	processor, err := service.New(
 		ctx,
 		hubSpotClient,
 		aiClient,
-		report.NewMarkdownPrinter(definition),
-		definition,
+		report.NewMarkdownPrinter(config.Definition),
+		config.Definition,
 		service.Options{
-			Prompt:                domain.CompanyResearchPrompt,
+			Prompt:                config.Prompt,
 			MinimalConfidence:     minimalConfidence,
 			HighConfidence:        highConfidence,
-			EnumerationProperties: []string{"industry"},
+			EnumerationProperties: config.EnumerationProperties,
+			OperationTimeout:      operationTimeout,
 		},
 	)
 	if err != nil {
@@ -77,7 +116,6 @@ func run(ctx context.Context) error {
 		logWriteResult(enrichedObject, status, err)
 	}
 
-	/* print as markdown to file for debugging purposes; this is not part of the normal workflow
 	var output bytes.Buffer
 	processedCount := 0
 	if enrichedObject != nil {
@@ -93,7 +131,6 @@ func run(ctx context.Context) error {
 	}
 
 	fmt.Printf("written %d objects to %s\n", processedCount, resultFile)
-	*/
 
 	if writeErr != nil {
 		return fmt.Errorf("HubSpot write failed: %w", writeErr)

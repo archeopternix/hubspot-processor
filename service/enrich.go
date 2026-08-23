@@ -19,7 +19,9 @@ func (s *Service) EnrichOne(ctx context.Context, object *domain.Object) (Status,
 	if s.isAlreadyEnriched(object) {
 		return StatusSkipped, nil
 	}
-	if err := s.enricher.EnrichObject(ctx, object, s.definition, s.prompt); err != nil {
+	operationCtx, cancel := withOperationTimeout(ctx, s.operationTimeout)
+	defer cancel()
+	if err := s.enricher.EnrichObject(operationCtx, object, s.definition, s.prompt); err != nil {
 		return StatusFailed, err
 	}
 	return StatusProcessed, nil

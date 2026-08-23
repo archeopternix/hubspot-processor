@@ -2,9 +2,7 @@ package hubspot
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -35,9 +33,6 @@ type objectPage struct {
 func (c *Client) ReadAll(ctx context.Context, definition domain.ObjectDefinition) ([]domain.Object, error) {
 	if strings.TrimSpace(definition.Type) == "" {
 		return nil, fmt.Errorf("HubSpot object type is empty")
-	}
-	if c.accessToken == "" {
-		return nil, fmt.Errorf("HubSpot access token is empty")
 	}
 
 	properties := definition.PropertyNames()
@@ -74,14 +69,8 @@ func (c *Client) readPage(
 	properties []string,
 	after string,
 ) (objectPage, error) {
-	endpoint, err := url.Parse(
-		strings.TrimRight(c.baseURL, "/") + "/crm/v3/objects/" + url.PathEscape(objectType),
-	)
-	if err != nil {
-		return objectPage{}, fmt.Errorf("parse HubSpot URL: %w", err)
-	}
-
-	query := endpoint.Query()
+	path := "/crm/v3/objects/" + url.PathEscape(objectType)
+	query := make(url.Values)
 	query.Set("limit", fmt.Sprintf("%d", c.pageSize))
 	if len(properties) > 0 {
 		query.Set("properties", strings.Join(properties, ","))
@@ -89,35 +78,17 @@ func (c *Client) readPage(
 	if after != "" {
 		query.Set("after", after)
 	}
-	endpoint.RawQuery = query.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
-	if err != nil {
-		return objectPage{}, fmt.Errorf("create HubSpot request: %w", err)
-	}
-
-	req.Header.Set("Authorization", "Bearer "+c.accessToken)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return objectPage{}, fmt.Errorf("HubSpot %s request failed: %w", objectType, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
-		return objectPage{}, fmt.Errorf(
-			"HubSpot returned %s for %s: %s",
-			resp.Status,
-			objectType,
-			strings.TrimSpace(string(body)),
-		)
-	}
-
 	var page objectPage
-	if err := json.NewDecoder(resp.Body).Decode(&page); err != nil {
-		return objectPage{}, fmt.Errorf("decode HubSpot %s response: %w", objectType, err)
+	if err := c.do(
+		ctx,
+		"read "+objectType,
+		http.MethodGet,
+		path,
+		query,
+		nil,
+		&page,
+	); err != nil {
+		return objectPage{}, err
 	}
 
 	return page, nil

@@ -29,7 +29,7 @@ type Object struct {
 }
 ```
 
-The domain package contains no HTTP or token handling. Object types are configured through `ObjectDefinition` presets such as `domain.CompanyDefinition`.
+The domain package contains no HTTP or token handling. Object types are configured through `ObjectDefinition` presets such as `domain.CompanyDefinition` and `domain.ContactDefinition`.
 
 ## Generic HubSpot read
 
@@ -62,11 +62,21 @@ PowerShell:
 
 ```powershell
 $env:HUBSPOT_ACCESS_TOKEN="your-token"
+$env:OPENAI_API_KEY="your-key"
 go run .
 ```
 
-Optional:
+Companies are processed by default. To process contacts:
+
+```powershell
+$env:HUBSPOT_OBJECT_TYPE="contacts"
+go run .
+```
+
+Both object types require a HubSpot property with the internal name `ai_enriched_date`. Optional configuration:
 
 ```powershell
 $env:HUBSPOT_BASE_URL="https://api.hubapi.com"
+$env:OPENAI_BASE_URL="https://api.openai.com/v1"
+$env:OPENAI_MODEL="gpt-5.6-luna"
 ```

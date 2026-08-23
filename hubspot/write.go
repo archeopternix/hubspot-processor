@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -17,7 +16,7 @@ type writeRequest struct {
 	Properties map[string]string `json:"properties"`
 }
 
-// Write writes one Company record to HubSpot.
+// Write updates one CRM object in HubSpot using the supplied definition.
 //
 // Only attributes explicitly marked with AttributeState.IsExport == true are sent.
 // The value written to HubSpot is AttributeState.Export. Import and Proposal are
@@ -32,9 +31,6 @@ func (c *Client) Write(
 	}
 	if strings.TrimSpace(object.ID) == "" {
 		return fmt.Errorf("HubSpot write: object ID is empty")
-	}
-	if c.accessToken == "" {
-		return fmt.Errorf("HubSpot write: access token is empty")
 	}
 	objectType := strings.TrimSpace(definition.Type)
 	if objectType == "" {
@@ -77,45 +73,15 @@ func (c *Client) Write(
 		return fmt.Errorf("HubSpot write: encode request: %w", err)
 	}
 
-	endpoint, err := url.Parse(
-		strings.TrimRight(c.baseURL, "/") +
-			"/crm/v3/objects/" + url.PathEscape(objectType) + "/" +
-			url.PathEscape(object.ID),
-	)
-	if err != nil {
-		return fmt.Errorf("HubSpot write: parse URL: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(
+	path := "/crm/v3/objects/" + url.PathEscape(objectType) + "/" +
+		url.PathEscape(object.ID)
+	return c.do(
 		ctx,
+		"write "+objectType+" "+object.ID,
 		http.MethodPatch,
-		endpoint.String(),
+		path,
+		nil,
 		bytes.NewReader(payload),
+		nil,
 	)
-	if err != nil {
-		return fmt.Errorf("HubSpot write: create request: %w", err)
-	}
-
-	req.Header.Set("Authorization", "Bearer "+c.accessToken)
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("HubSpot write: request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
-		return fmt.Errorf(
-			"HubSpot write: returned %s for %s %s: %s",
-			resp.Status,
-			objectType,
-			object.ID,
-			strings.TrimSpace(string(body)),
-		)
-	}
-
-	return nil
 }

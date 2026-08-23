@@ -1,12 +1,20 @@
 package hubspot
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
 
+// DefaultBaseURL is the default root URL for HubSpot API requests.
 const DefaultBaseURL = "https://api.hubapi.com"
+
+const maxErrorBodySize = 64 * 1024
 
 // Client is a small HubSpot CRM API client.
 type Client struct {
@@ -48,4 +56,59 @@ func (c *Client) WithPageSize(pageSize int) *Client {
 		c.pageSize = pageSize
 	}
 	return c
+}
+
+func (c *Client) do(
+	ctx context.Context,
+	operation string,
+	method string,
+	path string,
+	query url.Values,
+	body io.Reader,
+	out any,
+) error {
+	if c.accessToken == "" {
+		return fmt.Errorf("HubSpot %s: access token is empty", operation)
+	}
+
+	endpoint, err := url.Parse(strings.TrimRight(c.baseURL, "/") + path)
+	if err != nil {
+		return fmt.Errorf("HubSpot %s: parse URL: %w", operation, err)
+	}
+	if query != nil {
+		endpoint.RawQuery = query.Encode()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, endpoint.String(), body)
+	if err != nil {
+		return fmt.Errorf("HubSpot %s: create request: %w", operation, err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	req.Header.Set("Accept", "application/json")
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("HubSpot %s: request failed: %w", operation, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		raw, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBodySize))
+		return &APIError{
+			Category:   classifyHTTPStatus(resp.StatusCode),
+			Operation:  operation,
+			StatusCode: resp.StatusCode,
+			Body:       strings.TrimSpace(string(raw)),
+		}
+	}
+	if out == nil {
+		return nil
+	}
+	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+		return fmt.Errorf("HubSpot %s: decode response: %w", operation, err)
+	}
+	return nil
 }

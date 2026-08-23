@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/archeopternix/hubspot-processor/domain"
 )
@@ -15,6 +16,9 @@ type Options struct {
 	MinimalConfidence     float64
 	HighConfidence        float64
 	EnumerationProperties []string
+	// OperationTimeout limits each external HubSpot or AI operation. A zero
+	// value leaves deadline management to the caller and the underlying client.
+	OperationTimeout time.Duration
 }
 
 // Service is the application-facing API for reading, printing, enriching and
@@ -28,6 +32,7 @@ type Service struct {
 	minimalConfidence    float64
 	highConfidence       float64
 	enrichedDateProperty string
+	operationTimeout     time.Duration
 }
 
 // New creates a ready-to-use service and resolves configured HubSpot
@@ -58,6 +63,9 @@ func New(
 	if options.HighConfidence < 0 || options.HighConfidence > 1 {
 		return nil, fmt.Errorf("service: high confidence must be between 0 and 1")
 	}
+	if options.OperationTimeout < 0 {
+		return nil, fmt.Errorf("service: operation timeout must not be negative")
+	}
 
 	resolvedDefinition := definition
 	seenProperties := make(map[string]struct{}, len(options.EnumerationProperties))
@@ -71,7 +79,9 @@ func New(
 		}
 		seenProperties[propertyName] = struct{}{}
 
-		values, err := hubSpot.ReadPropertyOptions(ctx, definition.Type, propertyName)
+		operationCtx, cancel := withOperationTimeout(ctx, options.OperationTimeout)
+		values, err := hubSpot.ReadPropertyOptions(operationCtx, definition.Type, propertyName)
+		cancel()
 		if err != nil {
 			return nil, fmt.Errorf("service: resolve %s options: %w", propertyName, err)
 		}
@@ -87,12 +97,15 @@ func New(
 		minimalConfidence:    options.MinimalConfidence,
 		highConfidence:       options.HighConfidence,
 		enrichedDateProperty: "ai_enriched_date",
+		operationTimeout:     options.OperationTimeout,
 	}, nil
 }
 
 // ReadAll reads all objects described by the service definition from HubSpot.
 func (s *Service) ReadAll(ctx context.Context) ([]domain.Object, error) {
-	return s.hubSpot.ReadAll(ctx, s.definition)
+	operationCtx, cancel := withOperationTimeout(ctx, s.operationTimeout)
+	defer cancel()
+	return s.hubSpot.ReadAll(operationCtx, s.definition)
 }
 
 // PrintOne renders one object to writer.
@@ -112,4 +125,14 @@ func (s *Service) PrintAll(writer io.Writer, objects []domain.Object) error {
 		return fmt.Errorf("service print: writer is nil")
 	}
 	return s.printer.PrintAll(writer, objects)
+}
+
+func withOperationTimeout(
+	ctx context.Context,
+	timeout time.Duration,
+) (context.Context, context.CancelFunc) {
+	if timeout > 0 {
+		return context.WithTimeout(ctx, timeout)
+	}
+	return context.WithCancel(ctx)
 }
