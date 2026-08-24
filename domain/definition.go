@@ -43,6 +43,19 @@ func (d AttributeDefinition) AcceptsValue(value string) bool {
 	return false
 }
 
+// NormalizeProposal prepares a researched value for storage. All proposals are
+// trimmed, and attribute-specific storage formatting is applied where needed.
+func (d AttributeDefinition) NormalizeProposal(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" || d.Name != "hs_quick_context" {
+		return value
+	}
+
+	value = strings.ReplaceAll(value, "\r\n", "\n")
+	value = strings.ReplaceAll(value, "\r", "\n")
+	return strings.ReplaceAll(value, "\n", "\r\n") + "\r\n"
+}
+
 func isNonNegativeInteger(value string) bool {
 	if value == "" {
 		return false

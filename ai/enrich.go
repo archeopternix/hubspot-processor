@@ -71,6 +71,9 @@ type responsesResponse struct {
 
 // EnrichObject researches exactly one object and updates only Proposal and
 // Score on Research=true attributes. Import, Export and IsExport are preserved.
+// The object is not mutated unless the complete provider result is valid. A
+// definition without research attributes is a no-op and does not require an
+// API key.
 func (c *Client) EnrichObject(
 	ctx context.Context,
 	object *domain.Object,
@@ -80,52 +83,55 @@ func (c *Client) EnrichObject(
 	if object == nil {
 		return fmt.Errorf("ai: object is nil")
 	}
-	if strings.TrimSpace(c.apiKey) == "" {
-		return fmt.Errorf("ai: OpenAI API key is empty")
-	}
-	if len(definition.ResearchAttributes()) == 0 {
+	researchAttributes := definition.ResearchAttributes()
+	if len(researchAttributes) == 0 {
 		return nil
 	}
+	if c.apiKey == "" {
+		return fmt.Errorf("ai: OpenAI API key is empty")
+	}
 
-	fullPrompt := buildPrompt(prompt, *object, definition)
-	result, err := c.research(ctx, fullPrompt, definition)
+	fullPrompt := buildPrompt(prompt, *object, definition, researchAttributes)
+	result, err := c.research(ctx, fullPrompt, researchAttributes)
 	if err != nil {
 		return err
 	}
-	if err := validateResearchResult(result, definition); err != nil {
+	if err := validateResearchResult(result, researchAttributes); err != nil {
 		return err
 	}
 
-	// Apply only after the complete result passed validation.
+	applyResearchResult(object, researchAttributes, result)
+	return nil
+}
+
+func applyResearchResult(
+	object *domain.Object,
+	researchAttributes []domain.AttributeDefinition,
+	result researchResult,
+) {
+	definitions := make(
+		map[string]domain.AttributeDefinition,
+		len(researchAttributes),
+	)
+	for _, attribute := range researchAttributes {
+		definitions[attribute.Name] = attribute
+	}
+
 	for _, researched := range result.Attributes {
-		proposal := strings.TrimSpace(string(researched.Proposal))
-		if researched.Name == "hs_quick_context" {
-			proposal = formatQuickContextLineEndings(proposal)
-		}
+		attribute := definitions[researched.Name]
+		proposal := attribute.NormalizeProposal(string(researched.Proposal))
 		object.SetProposal(
 			researched.Name,
 			proposal,
 			researched.Score,
 		)
 	}
-
-	return nil
-}
-
-func formatQuickContextLineEndings(value string) string {
-	value = strings.ReplaceAll(value, "\r\n", "\n")
-	value = strings.ReplaceAll(value, "\r", "\n")
-	value = strings.TrimSpace(value)
-	if value == "" {
-		return ""
-	}
-	return strings.ReplaceAll(value, "\n", "\r\n") + "\r\n"
 }
 
 func (c *Client) research(
 	ctx context.Context,
 	prompt string,
-	definition domain.ObjectDefinition,
+	researchAttributes []domain.AttributeDefinition,
 ) (researchResult, error) {
 	requestBody := responsesRequest{
 		Model: c.model,
@@ -138,7 +144,7 @@ func (c *Client) research(
 				"type":   "json_schema",
 				"name":   "object_research",
 				"strict": true,
-				"schema": buildResearchSchema(definition),
+				"schema": buildResearchSchema(researchAttributes),
 			},
 		},
 	}
@@ -151,7 +157,7 @@ func (c *Client) research(
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		strings.TrimRight(c.baseURL, "/")+"/responses",
+		c.endpoint+"/responses",
 		bytes.NewReader(body),
 	)
 	if err != nil {
@@ -211,9 +217,12 @@ func responseOutputText(response responsesResponse) string {
 	return ""
 }
 
-func validateResearchResult(result researchResult, definition domain.ObjectDefinition) error {
+func validateResearchResult(
+	result researchResult,
+	researchAttributes []domain.AttributeDefinition,
+) error {
 	required := make(map[string]domain.AttributeDefinition)
-	for _, attribute := range definition.ResearchAttributes() {
+	for _, attribute := range researchAttributes {
 		required[attribute.Name] = attribute
 	}
 

@@ -7,7 +7,12 @@ import (
 	"github.com/archeopternix/hubspot-processor/domain"
 )
 
-func buildPrompt(basePrompt string, object domain.Object, definition domain.ObjectDefinition) string {
+func buildPrompt(
+	basePrompt string,
+	object domain.Object,
+	definition domain.ObjectDefinition,
+	researchAttributes []domain.AttributeDefinition,
+) string {
 	var b strings.Builder
 
 	b.WriteString(strings.TrimSpace(basePrompt))
@@ -26,7 +31,7 @@ func buildPrompt(basePrompt string, object domain.Object, definition domain.Obje
 	}
 
 	b.WriteString("\nATTRIBUTES TO RESEARCH\n")
-	for _, attribute := range definition.ResearchAttributes() {
+	for _, attribute := range researchAttributes {
 		fmt.Fprintf(&b, "\n%s\n", attribute.Name)
 		if description := strings.TrimSpace(attribute.Description); description != "" {
 			fmt.Fprintf(&b, "Description: %s\n", description)

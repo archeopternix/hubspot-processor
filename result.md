@@ -1,74 +1,78 @@
-# HubSpot Company Result
+**ID:** 260983626967
 
-## Atlas Elektronik GmbH
-
-**ID:** 260983626966
-
-**hs_lastmodifieddate:** 2026-08-12T08:47:57.334Z
+**hs_lastmodifieddate:** 2026-08-11T09:12:18.254Z
 
 | Attribute | Import | Proposal | Score | Export |
 |---|---|---|---|---|
-| name | Atlas Elektronik GmbH | TKMS ATLAS ELEKTRONIK Gmb... | 0.99 |  |
-| annualrevenue |  |  | 0.00 |  |
-| city | Bremen | Bremen | 0.99 |  |
-| country |  | Germany | 0.99 | Germany |
-| industry |  | DEFENSE_SPACE | 0.98 | DEFENSE_SPACE |
-| zip | 28309 | 28309 | 0.99 |  |
-| address |  | Sebaldsbrücker Heerstraße... | 0.99 | Sebaldsbrücker Heerstraße... |
-| state |  | Bremen | 0.99 | Bremen |
-| founded_year |  | 2005 | 0.90 | 2005 |
-| numberofemployees |  | 1856 | 0.92 | 1856 |
-| domain | atlas-elektronik.com | atlas-elektronik.com | 0.96 |  |
-| hs_quick_context |  | Summary<br><br>TKMS ATLAS ELE... | 0.94 | Summary<br><br>TKMS ATLAS ELE... |
+| name | thyssenkrupp Polysius Gmb... | thyssenkrupp Polysius Gmb... | 1.00 |  |
+| annualrevenue | 46782160000 |  | 0.00 |  |
+| city | Beckum | Beckum | 0.98 |  |
+| country | Germany | Germany | 1.00 |  |
+| industry | BUILDING_MATERIALS | BUILDING_MATERIALS | 0.98 |  |
+| zip | 59269 | 59269 | 1.00 |  |
+| address |  | Graf-Galen-Straße 17 | 1.00 | Graf-Galen-Straße 17 |
+| state | Nordrhein-Westfalen | Nordrhein-Westfalen | 1.00 |  |
+| founded_year |  | 1859 | 0.90 | 1859 |
+| numberofemployees | 4000 |  | 0.00 |  |
+| domain | thyssenkrupp-polysius.com | thyssenkrupp-polysius.com | 1.00 |  |
+| hs_quick_context |  | Summary<br><br>thyssenkrupp P... | 0.96 | Summary<br><br>thyssenkrupp P... |
 | ai_enriched_date |  |  |  | 2026-08-23 |
 
-**HubSpot Context:**
+**name Proposal:**
+
+thyssenkrupp Polysius GmbH
+
+**hs_quick_context Proposal:**
 
 Summary
 
-TKMS ATLAS ELEKTRONIK GmbH is a Bremen-based maritime defense technology company specializing in naval electronics, sensors, sonar, weapons and integrated systems.
+thyssenkrupp Polysius GmbH is a thyssenkrupp company supplying process technology, engineering, equipment, automation and services for cement, lime and related process industries.
 
 Services and products
 
-- Sonar, hydroacoustic and underwater sensor systems
-- Command, control, communications and information technology systems
-- Naval weapons, including torpedoes and anti-torpedo systems
-- Mine countermeasure and minehunting systems
-- Uncrewed underwater and maritime systems
-- System integration, engineering, training and lifecycle support
+- Engineering, procurement and construction services for cement and lime plants
+- Individual machines, complete production lines and plant modernization
+- Crushing, grinding, pyroprocessing, materials handling and automation technologies
+- Digital services, remote operating support, maintenance, spare parts and field services
+- Decarbonization solutions including alternative fuels, activated clay and oxyfuel technologies
 
 Major clients or customer groups
 
-- National and international navies
-- Government defense and procurement authorities
-- Operators of submarines and surface combatants
-- Civilian maritime and security organizations for selected technologies
+- Cement producers and cement plant operators
+- Lime producers and lime plant operators
+- Customers in chemical processing, pulp and paper, expanded clay, asphalt and waste-related industries
 
 Business strategy
 
-- Combine electronics, software, sensors and effectors into integrated maritime defense solutions
-- Expand platform-independent and uncrewed systems capabilities
-- Support customers across development, manufacturing, integration and lifecycle services
-- Operate internationally through affiliated companies and locations
+- Expand services for the company’s installed base of machines and plants
+- Develop technologies that reduce emissions and resource consumption in cement and lime production
+- Combine engineering, equipment, automation and lifecycle services through a global operating network
+- Support customers with plant modernization, operational improvement and digital assistance
 
 Key differentiators
 
-- Broad combination of hydroacoustics, sensors, software, communications and naval weapons
-- Capability to deliver solutions from individual components through complete systems
-- Platform- and OEM-independent portfolio
-- More than 120 years of experience associated with the ATLAS business
+- More than 160 years of Polysius business history
+- Full-range offering covering individual machines through complete plants
+- More than 17,600 machines and systems in use worldwide
+- More than 800 cement plants built worldwide
+- Portfolio combining process engineering, plant execution, equipment and services
 
 History and major milestones
 
-- The ATLAS business traces its industrial history back more than 120 years.
-- The present GmbH legal entity was established in 2005.
-- The company operated as ATLAS ELEKTRONIK GmbH before its legal name changed to TKMS ATLAS ELEKTRONIK GmbH in 2025.
+- 1859: Gottfried Polysius began operating a locksmith shop in Dessau
+- 1886: The company entered equipment production for cement plants
+- 1946: Westpol GmbH was founded in Neubeckum to rebuild the Polysius business in western Germany
+- 1949: Westpol GmbH was renamed Polysius GmbH
+- 1971: Fried. Krupp GmbH became the majority shareholder
+- 1999: The Krupp group merged with Thyssen to form thyssenkrupp AG
+- 2022: The thyssenkrupp Industrial Solutions Business Unit Cement Technologies was renamed Polysius
+- 2023: Polysius became part of thyssenkrupp’s Decarbon Technologies segment
 
 Company structure
 
-- Legal form: Gesellschaft mit beschränkter Haftung (GmbH)
-- Registered office: Bremen, Germany
-- Registered with the Local Court of Bremen under HRB 21570 HB
-- Part of the TKMS Group
-- The wider ATLAS organization includes affiliated companies and locations in Germany, the United Kingdom, Finland, Denmark, Australia, Canada, India, South Korea, the United States, the United Arab Emirates and Thailand
-- The company reported 1,856 employees for the 2024/2025 reporting period
+- Legal entity: thyssenkrupp Polysius GmbH
+- Legal form: German Gesellschaft mit beschränkter Haftung (GmbH)
+- Registered office: Essen, Germany
+- Main company address and operating headquarters: Graf-Galen-Straße 17, 59269 Beckum, Germany
+- Wholly owned subsidiary of thyssenkrupp AG
+- Part of the thyssenkrupp Decarbon Technologies segment

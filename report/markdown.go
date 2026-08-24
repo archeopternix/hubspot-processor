@@ -19,26 +19,15 @@ func NewMarkdownPrinter(definition domain.ObjectDefinition) *MarkdownPrinter {
 }
 
 func (p *MarkdownPrinter) PrintOne(writer io.Writer, object *domain.Object) error {
-	if object == nil {
-		return fmt.Errorf("Markdown print: object is nil")
-	}
-	return p.PrintAll(writer, []domain.Object{*object})
-}
-
-func (p *MarkdownPrinter) PrintAll(writer io.Writer, objects []domain.Object) error {
 	if writer == nil {
 		return fmt.Errorf("Markdown print: writer is nil")
 	}
+	if object == nil {
+		return fmt.Errorf("Markdown print: object is nil")
+	}
 
 	var b strings.Builder
-	fmt.Fprintf(&b, "# HubSpot %s Result\n\n", objectTypeLabel(p.definition.Type))
-
-	for i := range objects {
-		if i > 0 {
-			b.WriteString("\n---\n\n")
-		}
-		p.writeObject(&b, &objects[i])
-	}
+	p.writeObject(&b, object)
 
 	if _, err := io.WriteString(writer, b.String()); err != nil {
 		return fmt.Errorf("Markdown print: write output: %w", err)
@@ -46,12 +35,30 @@ func (p *MarkdownPrinter) PrintAll(writer io.Writer, objects []domain.Object) er
 	return nil
 }
 
-func (p *MarkdownPrinter) writeObject(b *strings.Builder, object *domain.Object) {
-	name := object.Name()
-	if name == "" {
-		name = "Unnamed " + objectTypeLabel(p.definition.Type)
+func (p *MarkdownPrinter) PrintAll(writer io.Writer, objects []domain.Object) error {
+	if writer == nil {
+		return fmt.Errorf("Markdown print: writer is nil")
 	}
-	fmt.Fprintf(b, "## %s\n\n", escapeMarkdownText(name))
+
+	if _, err := fmt.Fprintf(writer, "# HubSpot %s Result\n\n", objectTypeLabel(p.definition.Type)); err != nil {
+		return fmt.Errorf("Markdown print: write output: %w", err)
+	}
+
+	for i := range objects {
+		if i > 0 {
+			if _, err := io.WriteString(writer, "\n---\n\n"); err != nil {
+				return fmt.Errorf("Markdown print: write output: %w", err)
+			}
+		}
+		if err := p.PrintOne(writer, &objects[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *MarkdownPrinter) writeObject(b *strings.Builder, object *domain.Object) {
 	fmt.Fprintf(b, "**ID:** %s\n\n", escapeMarkdownText(object.ID))
 
 	for _, attribute := range p.definition.Attributes {
@@ -60,12 +67,13 @@ func (p *MarkdownPrinter) writeObject(b *strings.Builder, object *domain.Object)
 		}
 		fmt.Fprintf(
 			b,
-			"**%s:** %s\n\n",
+			"**%s:** %s\n",
 			escapeMarkdownText(attribute.Name),
 			escapeMarkdownText(truncate(object.ImportedValue(attribute.Name), 25)),
 		)
 	}
 
+	b.WriteString("\n")
 	b.WriteString("| Attribute | Import | Proposal | Score | Export |\n")
 	b.WriteString("|---|---|---|---|---|\n")
 	for _, attribute := range p.definition.Attributes {
@@ -84,10 +92,14 @@ func (p *MarkdownPrinter) writeObject(b *strings.Builder, object *domain.Object)
 		)
 	}
 
-	if _, configured := p.definition.Attribute("hs_quick_context"); configured {
-		b.WriteString("\n**HubSpot Context:**\n\n")
-		context := normalizeLineEndings(object.Attributes["hs_quick_context"].Proposal)
-		b.WriteString(strings.TrimSpace(context))
+	for _, attribute := range p.definition.Attributes {
+		state := object.Attributes[attribute.Name]
+		if len(state.Proposal) <= 25 {
+			continue
+		}
+
+		fmt.Fprintf(b, "\n**%s Proposal:**\n\n", escapeMarkdownText(attribute.Name))
+		b.WriteString(strings.TrimSpace(normalizeLineEndings(state.Proposal)))
 		b.WriteString("\n")
 	}
 }

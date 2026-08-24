@@ -2,13 +2,11 @@ package ai
 
 import "github.com/archeopternix/hubspot-processor/domain"
 
-func buildResearchSchema(definition domain.ObjectDefinition) map[string]any {
-	attributes := definition.ResearchAttributes()
+func buildResearchSchema(attributes []domain.AttributeDefinition) map[string]any {
 	attributeSchemas := make([]any, 0, len(attributes))
 	for _, attribute := range attributes {
-		attributeSchemas = append(attributeSchemas, map[string]any{
-			"type": "object",
-			"properties": map[string]any{
+		attributeSchemas = append(attributeSchemas, objectSchema(
+			map[string]any{
 				"name": map[string]any{
 					"type": "string",
 					"enum": []string{attribute.Name},
@@ -20,14 +18,12 @@ func buildResearchSchema(definition domain.ObjectDefinition) map[string]any {
 					"maximum": 1,
 				},
 			},
-			"required":             []string{"name", "proposal", "score"},
-			"additionalProperties": false,
-		})
+			"name", "proposal", "score",
+		))
 	}
 
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+	return objectSchema(
+		map[string]any{
 			"attributes": map[string]any{
 				"type": "array",
 				"items": map[string]any{
@@ -37,7 +33,15 @@ func buildResearchSchema(definition domain.ObjectDefinition) map[string]any {
 				"maxItems": len(attributes),
 			},
 		},
-		"required":             []string{"attributes"},
+		"attributes",
+	)
+}
+
+func objectSchema(properties map[string]any, required ...string) map[string]any {
+	return map[string]any{
+		"type":                 "object",
+		"properties":           properties,
+		"required":             required,
 		"additionalProperties": false,
 	}
 }
