@@ -1,78 +1,79 @@
-**ID:** 260983626967
+**ID:** 484659240180
 
-**hs_lastmodifieddate:** 2026-08-11T09:12:18.254Z
+**hs_lastmodifieddate:** 
 
 | Attribute | Import | Proposal | Score | Export |
 |---|---|---|---|---|
-| name | thyssenkrupp Polysius Gmb... | thyssenkrupp Polysius Gmb... | 1.00 |  |
-| annualrevenue | 46782160000 |  | 0.00 |  |
-| city | Beckum | Beckum | 0.98 |  |
-| country | Germany | Germany | 1.00 |  |
-| industry | BUILDING_MATERIALS | BUILDING_MATERIALS | 0.98 |  |
-| zip | 59269 | 59269 | 1.00 |  |
-| address |  | Graf-Galen-Straße 17 | 1.00 | Graf-Galen-Straße 17 |
-| state | Nordrhein-Westfalen | Nordrhein-Westfalen | 1.00 |  |
-| founded_year |  | 1859 | 0.90 | 1859 |
-| numberofemployees | 4000 |  | 0.00 |  |
-| domain | thyssenkrupp-polysius.com | thyssenkrupp-polysius.com | 1.00 |  |
-| hs_quick_context |  | Summary<br><br>thyssenkrupp P... | 0.96 | Summary<br><br>thyssenkrupp P... |
-| ai_enriched_date |  |  |  | 2026-08-23 |
+| firstname | Justin | Justin | 1.00 |  |
+| lastname | Bisping | Bisping | 1.00 |  |
+| email | justin.bisping@thyssenkru... | justin.bisping@thyssenkru... | 0.99 |  |
+| phone |  | +49 25 25 99 31 48 | 0.98 | +49 25 25 99 31 48 |
+| mobilephone | +49 152 09067532 |  | 0.00 |  |
+| jobtitle | Head of Automation & Digi... | Head of Digitalization, C... | 0.94 | Head of Digitalization, C... |
+| company | thyssenkrupp Polysius Gmb... | thyssenkrupp Polysius Gmb... | 0.99 |  |
+| hs_linkedin_url |  | https://www.linkedin.com/... | 0.99 | https://www.linkedin.com/... |
+| career_summary |  | Dr. Justin Bisping is Hea... | 0.93 | Dr. Justin Bisping is Hea... |
+| xing_url |  |  | 0.00 |  |
+| state |  | North Rhine-Westphalia | 0.80 | North Rhine-Westphalia |
+| zip |  | 59269 | 0.80 | 59269 |
+| country |  | Germany | 0.99 | Germany |
+| ct_quick_context |  | Summary [August 27, 2026]... | 0.92 | Summary [August 27, 2026]... |
+| ai_enriched_date |  |  |  | 2026-08-27 |
 
-**name Proposal:**
+**email Proposal:**
+
+justin.bisping@thyssenkrupp.com
+
+**jobtitle Proposal:**
+
+Head of Digitalization, Cement Technology
+
+**company Proposal:**
 
 thyssenkrupp Polysius GmbH
 
-**hs_quick_context Proposal:**
+**hs_linkedin_url Proposal:**
 
-Summary
+https://www.linkedin.com/in/justin-bisping-64390244
 
-thyssenkrupp Polysius GmbH is a thyssenkrupp company supplying process technology, engineering, equipment, automation and services for cement, lime and related process industries.
+**career_summary Proposal:**
 
-Services and products
+Dr. Justin Bisping is Head of Digitalization, Cement Technology at thyssenkrupp Polysius GmbH, focusing on digitalization and automation solutions for the cement industry. He previously held a design and engineering leadership role in pyroprocessing technologies at thyssenkrupp Industrial Solutions. He studied at Technische Universität Darmstadt from 2010 to 2014 and has documented work involving data analytics, AI-enabled solutions, automated quality control, remote services, and condition monitoring.
 
-- Engineering, procurement and construction services for cement and lime plants
-- Individual machines, complete production lines and plant modernization
-- Crushing, grinding, pyroprocessing, materials handling and automation technologies
-- Digital services, remote operating support, maintenance, spare parts and field services
-- Decarbonization solutions including alternative fuels, activated clay and oxyfuel technologies
+**ct_quick_context Proposal:**
 
-Major clients or customer groups
+Summary [August 27, 2026]
 
-- Cement producers and cement plant operators
-- Lime producers and lime plant operators
-- Customers in chemical processing, pulp and paper, expanded clay, asphalt and waste-related industries
+Justin Bisping is a digitalization leader in the cement technology sector. His documented professional focus includes digital solutions, automation, data analysis, and condition monitoring for cement plants.
 
-Business strategy
+Current role
 
-- Expand services for the company’s installed base of machines and plants
-- Develop technologies that reduce emissions and resource consumption in cement and lime production
-- Combine engineering, equipment, automation and lifecycle services through a global operating network
-- Support customers with plant modernization, operational improvement and digital assistance
+- Head of Digitalization, Cement Technology at thyssenkrupp Polysius GmbH
 
-Key differentiators
+Professional experience
 
-- More than 160 years of Polysius business history
-- Full-range offering covering individual machines through complete plants
-- More than 17,600 machines and systems in use worldwide
-- More than 800 cement plants built worldwide
-- Portfolio combining process engineering, plant execution, equipment and services
+- Present: Head of Digitalization, Cement Technology at thyssenkrupp Polysius GmbH
+- 2023: Head of Automation & Digital at thyssenkrupp Polysius
+- Undated: Head of Design and Engineering Pyroprocessing Technologies at thyssenkrupp Industrial Solutions
 
-History and major milestones
+Education
 
-- 1859: Gottfried Polysius began operating a locksmith shop in Dessau
-- 1886: The company entered equipment production for cement plants
-- 1946: Westpol GmbH was founded in Neubeckum to rebuild the Polysius business in western Germany
-- 1949: Westpol GmbH was renamed Polysius GmbH
-- 1971: Fried. Krupp GmbH became the majority shareholder
-- 1999: The Krupp group merged with Thyssen to form thyssenkrupp AG
-- 2022: The thyssenkrupp Industrial Solutions Business Unit Cement Technologies was renamed Polysius
-- 2023: Polysius became part of thyssenkrupp’s Decarbon Technologies segment
+- 2010–2014: Technische Universität Darmstadt
 
-Company structure
+Skills
 
-- Legal entity: thyssenkrupp Polysius GmbH
-- Legal form: German Gesellschaft mit beschränkter Haftung (GmbH)
-- Registered office: Essen, Germany
-- Main company address and operating headquarters: Graf-Galen-Straße 17, 59269 Beckum, Germany
-- Wholly owned subsidiary of thyssenkrupp AG
-- Part of the thyssenkrupp Decarbon Technologies segment
+- Digitalization
+- Automation
+- Data analytics
+- Artificial intelligence solutions
+- Automated quality control
+- Remote services
+- Condition monitoring
+- 3D-CAD and finite-element methods
+
+REFERENCES
+
+- Official thyssenkrupp Polysius Insights profile and interview
+- Official thyssenkrupp Polysius contact page
+- Public LinkedIn profile
+- Smart Cement Plant expert contact page

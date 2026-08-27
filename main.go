@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -28,9 +29,9 @@ func main() {
 
 	var err error
 	switch strings.ToLower(strings.TrimSpace(os.Getenv("HUBSPOT_OBJECT_TYPE"))) {
-	case "", "companies":
+	case "companies":
 		err = runCompanies(ctx)
-	case "contacts":
+	case "", "contacts":
 		err = runContacts(ctx)
 	default:
 		err = fmt.Errorf(
@@ -98,10 +99,7 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 	if err != nil {
 		return err
 	}
-	log.Printf(
-		"Hubspot read completed objects=%d",
-		len(objects),
-	)
+	slog.Info("Hubspot read completed", "objects=", len(objects))
 
 	enrichedObject, enrichResult, err := processor.EnrichFirstEligible(ctx, objects)
 	if err != nil {
@@ -113,7 +111,7 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 	if enrichedObject != nil {
 		status, err := processor.WriteOne(ctx, enrichedObject)
 		writeErr = err
-		logWriteResult(enrichedObject, status, err)
+		logWriteResult(enrichedObject, status, writeErr)
 	}
 
 	var output bytes.Buffer
@@ -126,15 +124,20 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 	} else if err := processor.PrintAll(&output, nil); err != nil {
 		return err
 	}
+
+	/* for debug purpose only
 	if err := os.WriteFile(resultFile, output.Bytes(), 0o644); err != nil {
 		return fmt.Errorf("write %s: %w", resultFile, err)
 	}
 
-	fmt.Printf("written %d objects to %s\n", processedCount, resultFile)
+
+	*/
 
 	if writeErr != nil {
 		return fmt.Errorf("HubSpot write failed: %w", writeErr)
 	}
+
+	slog.Info("written objects to file", "count", processedCount, "file", resultFile)
 
 	return nil
 }

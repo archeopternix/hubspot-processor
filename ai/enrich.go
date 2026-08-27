@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -92,6 +93,10 @@ func (c *Client) EnrichObject(
 	}
 
 	fullPrompt := buildPrompt(prompt, *object, definition, researchAttributes)
+
+	// only in debug mode
+	slog.Debug("researching prompt", "prompt", fullPrompt)
+
 	result, err := c.research(ctx, fullPrompt, researchAttributes)
 	if err != nil {
 		return err

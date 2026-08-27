@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/archeopternix/hubspot-processor/domain"
 )
@@ -59,6 +60,9 @@ func (s *Service) enrichObjects(
 		}
 
 		status, err := s.EnrichOne(ctx, &objects[i])
+		if err != nil {
+			slog.Error("error enriching object %s: %v", objects[i].ID, err)
+		}
 		result.add(objects[i].ID, status, err)
 		if err != nil && ctx.Err() != nil {
 			return result, nil, ctx.Err()
