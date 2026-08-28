@@ -62,6 +62,14 @@ func (o *Object) SetImport(name, value string) {
 	o.Attributes[name] = attribute
 }
 
+// SetExport marks a value to be written to the destination system.
+func (o *Object) SetExport(name, value string) {
+	attribute := o.Attributes[name]
+	attribute.Export = value
+	attribute.IsExport = strings.TrimSpace(value) != ""
+	o.Attributes[name] = attribute
+}
+
 // SetProposal updates only the AI-proposed value and its confidence score.
 // Imported and export-related values are preserved.
 func (o *Object) SetProposal(name, value string, score float64) {

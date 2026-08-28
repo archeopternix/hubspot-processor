@@ -44,6 +44,8 @@ func (s *Service) evaluateObject(object *domain.Object) bool {
 			continue
 		}
 
+		preparedExport := state.Export
+		isPreparedExport := state.IsExport && strings.TrimSpace(preparedExport) != ""
 		state.Export = ""
 		state.IsExport = false
 		candidates[name] = state
@@ -52,6 +54,13 @@ func (s *Service) evaluateObject(object *domain.Object) bool {
 			continue
 		}
 		if !attribute.Export {
+			continue
+		}
+		if isPreparedExport {
+			state.Export = preparedExport
+			state.IsExport = true
+			changed = true
+			candidates[name] = state
 			continue
 		}
 

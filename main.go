@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -126,6 +127,13 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 	slog.Info("Hubspot read completed", "objects=", len(objects))
 
 	objects = filterObjects(objects, config.RunMode)
+	if err := processor.Preprocess(ctx, objects); err != nil {
+		if contextErr := ctx.Err(); contextErr != nil {
+			return contextErr
+		}
+		slog.Error("HubSpot preprocessing failed; continuing", "error", err)
+	}
+
 	processedObjects := make([]domain.Object, 0, len(objects))
 	for i := range objects {
 		if err := enrichObject(ctx, processor, &objects[i]); err != nil {
@@ -150,13 +158,10 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 		return err
 	}
 
-	/* for debug purpose only
+	// for debug purpose only
 	if err := os.WriteFile(resultFile, output.Bytes(), 0o644); err != nil {
 		return fmt.Errorf("write %s: %w", resultFile, err)
 	}
-
-
-	*/
 
 	slog.Info("written objects to file", "count", processedCount, "file", resultFile)
 
@@ -187,18 +192,18 @@ func enrichObject(
 	object *domain.Object,
 ) error {
 	start := time.Now()
-	status, err := processor.EnrichObject(ctx, object)
-	logEnrichmentResult(object, status, err, time.Since(start))
-	if err != nil {
-		return fmt.Errorf("enrich object %s: %w", object.ID, err)
+	status, enrichErr := processor.EnrichObject(ctx, object)
+	logEnrichmentResult(object, status, enrichErr, time.Since(start))
+	if enrichErr != nil {
+		enrichErr = fmt.Errorf("enrich object %s: %w", object.ID, enrichErr)
 	}
 
-	status, err = processor.WriteOne(ctx, object)
-	logWriteResult(object, status, err)
-	if err != nil {
-		return fmt.Errorf("write object %s: %w", object.ID, err)
+	status, writeErr := processor.WriteOne(ctx, object)
+	logWriteResult(object, status, writeErr)
+	if writeErr != nil {
+		writeErr = fmt.Errorf("write object %s: %w", object.ID, writeErr)
 	}
-	return nil
+	return errors.Join(enrichErr, writeErr)
 }
 
 func newHubSpotClient() (*hubspot.Client, error) {

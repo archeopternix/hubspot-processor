@@ -10,6 +10,7 @@ import (
 // HubSpotGateway describes the HubSpot operations required by the service.
 type HubSpotGateway interface {
 	ReadAll(context.Context, domain.ObjectDefinition) ([]domain.Object, error)
+	ReadPrimaryCompanies(context.Context, []string) (map[string]domain.Object, error)
 	ReadPropertyOptions(context.Context, string, string) ([]string, error)
 	Write(context.Context, *domain.Object, domain.ObjectDefinition) error
 }

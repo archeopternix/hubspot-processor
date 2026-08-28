@@ -1,79 +1,72 @@
-**ID:** 484659240180
+**ID:** 484754921702
 
 **hs_lastmodifieddate:** 
 
 | Attribute | Import | Proposal | Score | Export |
 |---|---|---|---|---|
-| firstname | Justin | Justin | 1.00 |  |
-| lastname | Bisping | Bisping | 1.00 |  |
-| email | justin.bisping@thyssenkru... | justin.bisping@thyssenkru... | 0.99 |  |
-| phone |  | +49 25 25 99 31 48 | 0.98 | +49 25 25 99 31 48 |
-| mobilephone | +49 152 09067532 |  | 0.00 |  |
-| jobtitle | Head of Automation & Digi... | Head of Digitalization, C... | 0.94 | Head of Digitalization, C... |
-| company | thyssenkrupp Polysius Gmb... | thyssenkrupp Polysius Gmb... | 0.99 |  |
-| hs_linkedin_url |  | https://www.linkedin.com/... | 0.99 | https://www.linkedin.com/... |
-| career_summary |  | Dr. Justin Bisping is Hea... | 0.93 | Dr. Justin Bisping is Hea... |
-| xing_url |  |  | 0.00 |  |
-| state |  | North Rhine-Westphalia | 0.80 | North Rhine-Westphalia |
-| zip |  | 59269 | 0.80 | 59269 |
+| firstname | Andrea | Andrea | 0.99 |  |
+| lastname | Böttger | Böttger | 0.99 |  |
+| email | andrea.boettger@thyssenkr... |  | 0.00 |  |
+| phone |  |  | 0.00 |  |
+| mobilephone |  |  | 0.00 |  |
+| jobtitle |  | Head of Digitalization | 0.98 | Head of Digitalization |
+| company | thyssenkrupp AG | thyssenkrupp AG | 0.99 |  |
+| address |  | thyssenkrupp Allee 1 | 0.90 | thyssenkrupp Allee 1 |
+| city | Essen | Essen | 0.99 | Essen |
+| hs_linkedin_url |  | https://de.linkedin.com/i... | 0.99 | https://de.linkedin.com/i... |
+| career_summary |  | Andrea Böttger is Head of... | 0.95 | Andrea Böttger is Head of... |
+| xing_url |  | https://www.xing.com/prof... | 0.99 | https://www.xing.com/prof... |
+| state |  | North Rhine-Westphalia | 0.95 | North Rhine-Westphalia |
+| zip | 45143 | 45143 | 0.95 | 45143 |
 | country |  | Germany | 0.99 | Germany |
-| ct_quick_context |  | Summary [August 27, 2026]... | 0.92 | Summary [August 27, 2026]... |
-| ai_enriched_date |  |  |  | 2026-08-27 |
-
-**email Proposal:**
-
-justin.bisping@thyssenkrupp.com
-
-**jobtitle Proposal:**
-
-Head of Digitalization, Cement Technology
-
-**company Proposal:**
-
-thyssenkrupp Polysius GmbH
+| ct_quick_context |  | Summary [2026-08-28]<br><br>A... | 0.95 | Summary [2026-08-28]<br><br>A... |
+| ai_enriched_date |  |  |  | 2026-08-28 |
 
 **hs_linkedin_url Proposal:**
 
-https://www.linkedin.com/in/justin-bisping-64390244
+https://de.linkedin.com/in/andrea-boettger
 
 **career_summary Proposal:**
 
-Dr. Justin Bisping is Head of Digitalization, Cement Technology at thyssenkrupp Polysius GmbH, focusing on digitalization and automation solutions for the cement industry. He previously held a design and engineering leadership role in pyroprocessing technologies at thyssenkrupp Industrial Solutions. He studied at Technische Universität Darmstadt from 2010 to 2014 and has documented work involving data analytics, AI-enabled solutions, automated quality control, remote services, and condition monitoring.
+Andrea Böttger is Head of Digitalization at thyssenkrupp AG, Segment Automotive Technology, in Essen. She previously worked as Manager IT Controlling at thyssenkrupp AG from January 2018 to July 2021 and as Head of Business Intelligence at thyssenkrupp AG, BA Components Technology. Her public profiles list Humboldt-Universität zu Berlin and document skills including SAP BI/BW, Business Intelligence, data warehousing, project management, and change management.
+
+**xing_url Proposal:**
+
+https://www.xing.com/profile/Andrea_Boettger11
 
 **ct_quick_context Proposal:**
 
-Summary [August 27, 2026]
+Summary [2026-08-28]
 
-Justin Bisping is a digitalization leader in the cement technology sector. His documented professional focus includes digital solutions, automation, data analysis, and condition monitoring for cement plants.
+Andrea Böttger is a digitalization professional working in Essen. Her documented focus includes digitalization, business intelligence, data warehousing, and SAP BI/BW.
 
 Current role
 
-- Head of Digitalization, Cement Technology at thyssenkrupp Polysius GmbH
+- Head of Digitalization at thyssenkrupp AG, Segment Automotive Technology
 
 Professional experience
 
-- Present: Head of Digitalization, Cement Technology at thyssenkrupp Polysius GmbH
-- 2023: Head of Automation & Digital at thyssenkrupp Polysius
-- Undated: Head of Design and Engineering Pyroprocessing Technologies at thyssenkrupp Industrial Solutions
+- 2021-08–present: Head of Digitalization at thyssenkrupp AG, Segment Automotive Technology
+- 2018-01–2021-07: Manager IT Controlling at thyssenkrupp AG
+- Prior role: Head of Business Intelligence at thyssenkrupp AG, BA Components Technology
 
 Education
 
-- 2010–2014: Technische Universität Darmstadt
+- Humboldt-Universität zu Berlin
 
 Skills
 
-- Digitalization
-- Automation
-- Data analytics
-- Artificial intelligence solutions
-- Automated quality control
-- Remote services
-- Condition monitoring
-- 3D-CAD and finite-element methods
+- SAP BI/BW
+- Business Intelligence
+- Data Warehousing
+- Analytical Thinking
+- Project Management
+- Change Management
+- Project Planning
+- Team Leadership
 
 REFERENCES
 
-- Official thyssenkrupp Polysius Insights profile and interview
-- Official thyssenkrupp Polysius contact page
-- Public LinkedIn profile
-- Smart Cement Plant expert contact page
+- Public LinkedIn profile for Andrea Böttger at thyssenkrupp
+- Public XING profile for Andrea Böttger at thyssenkrupp AG, Segment Automotive Technology
+- Official thyssenkrupp AG corporate address and imprint
