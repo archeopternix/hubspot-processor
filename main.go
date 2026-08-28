@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"strings"
@@ -18,10 +17,26 @@ import (
 )
 
 const (
-	resultFile        = "result.md"
-	minimalConfidence = 0.75
-	highConfidence    = 0.90
-	operationTimeout  = 2 * time.Minute
+	resultFile           = "result.md"
+	enrichedDateProperty = "ai_enriched_date"
+	minimalConfidence    = 0.75
+	highConfidence       = 0.90
+	operationTimeout     = 2 * time.Minute
+)
+
+type runMode uint8
+
+const (
+	runFirstEligible runMode = iota
+	runAllEligible
+	runAll
+)
+
+type errorMode uint8
+
+const (
+	stopOnFirstError errorMode = iota
+	skipFailedRecord
 )
 
 func main() {
@@ -29,10 +44,23 @@ func main() {
 
 	var err error
 	switch strings.ToLower(strings.TrimSpace(os.Getenv("HUBSPOT_OBJECT_TYPE"))) {
+	// run companies
 	case "companies":
-		err = runCompanies(ctx)
+		err = runObject(ctx, objectRunConfig{
+			Definition:            domain.CompanyDefinition,
+			Prompt:                domain.CompanyResearchPrompt,
+			EnumerationProperties: []string{"industry"},
+			RunMode:               runFirstEligible,
+			ErrorMode:             skipFailedRecord,
+		})
+	// run contacts
 	case "", "contacts":
-		err = runContacts(ctx)
+		err = runObject(ctx, objectRunConfig{
+			Definition: domain.ContactDefinition,
+			Prompt:     domain.ContactResearchPrompt,
+			RunMode:    runFirstEligible,
+			ErrorMode:  skipFailedRecord,
+		})
 	default:
 		err = fmt.Errorf(
 			"unsupported HUBSPOT_OBJECT_TYPE %q: expected companies or contacts",
@@ -50,24 +78,20 @@ type objectRunConfig struct {
 	Definition            domain.ObjectDefinition
 	Prompt                string
 	EnumerationProperties []string
-}
-
-func runCompanies(ctx context.Context) error {
-	return runObject(ctx, objectRunConfig{
-		Definition:            domain.CompanyDefinition,
-		Prompt:                domain.CompanyResearchPrompt,
-		EnumerationProperties: []string{"industry"},
-	})
-}
-
-func runContacts(ctx context.Context) error {
-	return runObject(ctx, objectRunConfig{
-		Definition: domain.ContactDefinition,
-		Prompt:     domain.ContactResearchPrompt,
-	})
+	RunMode               runMode
+	ErrorMode             errorMode
 }
 
 func runObject(ctx context.Context, config objectRunConfig) error {
+	if config.RunMode != runFirstEligible &&
+		config.RunMode != runAllEligible &&
+		config.RunMode != runAll {
+		return fmt.Errorf("unsupported run mode %d", config.RunMode)
+	}
+	if config.ErrorMode != stopOnFirstError && config.ErrorMode != skipFailedRecord {
+		return fmt.Errorf("unsupported error mode %d", config.ErrorMode)
+	}
+
 	hubSpotClient, err := newHubSpotClient()
 	if err != nil {
 		return err
@@ -101,27 +125,28 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 	}
 	slog.Info("Hubspot read completed", "objects=", len(objects))
 
-	enrichedObject, enrichResult, err := processor.EnrichFirstEligible(ctx, objects)
-	if err != nil {
-		return fmt.Errorf("enrich objects: %w", err)
-	}
-	logEnrichmentResult(enrichResult, objects)
-
-	var writeErr error
-	if enrichedObject != nil {
-		status, err := processor.WriteOne(ctx, enrichedObject)
-		writeErr = err
-		logWriteResult(enrichedObject, status, writeErr)
+	objects = filterObjects(objects, config.RunMode)
+	processedObjects := make([]domain.Object, 0, len(objects))
+	for i := range objects {
+		if err := enrichObject(ctx, processor, &objects[i]); err != nil {
+			if contextErr := ctx.Err(); contextErr != nil {
+				return contextErr
+			}
+			if config.ErrorMode == stopOnFirstError {
+				return err
+			}
+			continue
+		}
+		processedObjects = append(processedObjects, objects[i])
 	}
 
 	var output bytes.Buffer
-	processedCount := 0
-	if enrichedObject != nil {
-		processedCount = 1
-		if err := processor.PrintOne(&output, enrichedObject); err != nil {
+	processedCount := len(processedObjects)
+	if config.RunMode == runFirstEligible && processedCount == 1 {
+		if err := processor.PrintOne(&output, &processedObjects[0]); err != nil {
 			return err
 		}
-	} else if err := processor.PrintAll(&output, nil); err != nil {
+	} else if err := processor.PrintAll(&output, processedObjects); err != nil {
 		return err
 	}
 
@@ -133,12 +158,46 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 
 	*/
 
-	if writeErr != nil {
-		return fmt.Errorf("HubSpot write failed: %w", writeErr)
-	}
-
 	slog.Info("written objects to file", "count", processedCount, "file", resultFile)
 
+	return nil
+}
+
+func filterObjects(objects []domain.Object, mode runMode) []domain.Object {
+	if mode == runAll {
+		return objects
+	}
+
+	filtered := make([]domain.Object, 0, len(objects))
+	for i := range objects {
+		if objects[i].ImportedValue(enrichedDateProperty) != "" {
+			continue
+		}
+		filtered = append(filtered, objects[i])
+		if mode == runFirstEligible {
+			break
+		}
+	}
+	return filtered
+}
+
+func enrichObject(
+	ctx context.Context,
+	processor *service.Service,
+	object *domain.Object,
+) error {
+	start := time.Now()
+	status, err := processor.EnrichObject(ctx, object)
+	logEnrichmentResult(object, status, err, time.Since(start))
+	if err != nil {
+		return fmt.Errorf("enrich object %s: %w", object.ID, err)
+	}
+
+	status, err = processor.WriteOne(ctx, object)
+	logWriteResult(object, status, err)
+	if err != nil {
+		return fmt.Errorf("write object %s: %w", object.ID, err)
+	}
 	return nil
 }
 
@@ -173,47 +232,39 @@ func newAIClient() (*ai.Client, error) {
 	return client, nil
 }
 
-func logEnrichmentResult(result service.BatchResult, objects []domain.Object) {
-	objectsByID := make(map[string]*domain.Object, len(objects))
-	for i := range objects {
-		objectsByID[objects[i].ID] = &objects[i]
+func logEnrichmentResult(
+	object *domain.Object,
+	status service.Status,
+	err error,
+	duration time.Duration,
+) {
+	if err != nil {
+		slog.Error(
+			"AI enrichment failed",
+			"id", object.ID,
+			"name", object.Name(),
+			"duration", duration,
+			"error", err,
+		)
+		return
 	}
-
-	for _, item := range result.Items {
-		object := objectsByID[item.ObjectID]
-		switch item.Status {
-		case service.StatusProcessed:
-			log.Printf(
-				"AI enrichment completed id=%s name=%q",
-				item.ObjectID,
-				object.Name(),
-			)
-		case service.StatusSkipped:
-			log.Printf(
-				"AI enrichment skipped id=%s name=%q ai_enriched_date=%q",
-				item.ObjectID,
-				object.Name(),
-				object.ImportedValue("ai_enriched_date"),
-			)
-		case service.StatusFailed:
-			log.Printf(
-				"AI enrichment failed id=%s name=%q error=%v",
-				item.ObjectID,
-				object.Name(),
-				item.Err,
-			)
-		}
-	}
+	slog.Info(
+		"AI enrichment completed",
+		"id", object.ID,
+		"name", object.Name(),
+		"status", status,
+		"duration", duration,
+	)
 }
 
 func logWriteResult(object *domain.Object, status service.Status, err error) {
 	if err != nil {
-		log.Printf("HubSpot write failed id=%s name=%q error=%v", object.ID, object.Name(), err)
+		slog.Error("HubSpot write failed", "id", object.ID, "name", object.Name(), "error", err)
 		return
 	}
 	if status == service.StatusSkipped {
-		log.Printf("HubSpot write skipped id=%s name=%q", object.ID, object.Name())
+		slog.Info("HubSpot write skipped", "id", object.ID, "name", object.Name())
 		return
 	}
-	log.Printf("HubSpot write completed id=%s name=%q", object.ID, object.Name())
+	slog.Info("HubSpot write completed", "id", object.ID, "name", object.Name())
 }

@@ -29,27 +29,6 @@ func (s *Service) WriteOne(ctx context.Context, object *domain.Object) (Status, 
 	return StatusWritten, nil
 }
 
-// WriteAll evaluates and writes every supplied object. Object-level failures
-// are collected and do not prevent later records from being processed.
-func (s *Service) WriteAll(
-	ctx context.Context,
-	objects []domain.Object,
-) (BatchResult, error) {
-	result := newBatchResult(len(objects))
-	for i := range objects {
-		if err := ctx.Err(); err != nil {
-			return result, err
-		}
-
-		status, err := s.WriteOne(ctx, &objects[i])
-		result.add(objects[i].ID, status, err)
-		if err != nil && ctx.Err() != nil {
-			return result, ctx.Err()
-		}
-	}
-	return result, nil
-}
-
 func (s *Service) evaluateObject(object *domain.Object) bool {
 	candidates := make(map[string]domain.AttributeState, len(s.definition.Attributes))
 	changed := false
