@@ -51,7 +51,7 @@ func main() {
 			Definition:            domain.CompanyDefinition,
 			Prompt:                domain.CompanyResearchPrompt,
 			EnumerationProperties: []string{"industry"},
-			RunMode:               runFirstEligible,
+			RunMode:               runAllEligible,
 			ErrorMode:             skipFailedRecord,
 		})
 	// run contacts
@@ -59,7 +59,7 @@ func main() {
 		err = runObject(ctx, objectRunConfig{
 			Definition: domain.ContactDefinition,
 			Prompt:     domain.ContactResearchPrompt,
-			RunMode:    runFirstEligible,
+			RunMode:    runAllEligible,
 			ErrorMode:  skipFailedRecord,
 		})
 	default:
@@ -131,7 +131,7 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 		if contextErr := ctx.Err(); contextErr != nil {
 			return contextErr
 		}
-		slog.Error("HubSpot preprocessing failed; continuing", "error", err)
+		logPreprocessingErrors(err)
 	}
 
 	processedObjects := make([]domain.Object, 0, len(objects))
@@ -166,6 +166,17 @@ func runObject(ctx context.Context, config objectRunConfig) error {
 	slog.Info("written objects to file", "count", processedCount, "file", resultFile)
 
 	return nil
+}
+
+func logPreprocessingErrors(err error) {
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		for _, nestedErr := range joined.Unwrap() {
+			logPreprocessingErrors(nestedErr)
+		}
+		return
+	}
+
+	slog.Error("HubSpot preprocessing failed; continuing", "error", err)
 }
 
 func filterObjects(objects []domain.Object, mode runMode) []domain.Object {
